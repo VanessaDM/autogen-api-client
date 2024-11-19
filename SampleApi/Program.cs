@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -5,6 +6,14 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
+});
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((doc, _, _) =>
+    {
+        doc.Info.Version = Assembly.GetExecutingAssembly().GetName().Version!.ToString(3);
+        return Task.CompletedTask;
+    });
 });
 
 var app = builder.Build();
