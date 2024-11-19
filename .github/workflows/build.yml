@@ -26,3 +26,94 @@ jobs:
 
     - name: Build API
       run: dotnet build --configuration Release --no-restore
+
+    - name: Upload OpenAPI spec
+      uses: actions/upload-artifact@v4
+      with:
+        name: openapi-spec
+        path: SampleApi.json
+
+  gen_openapi_nodejs_client_pkg:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Download OpenAPI spec
+      uses: actions/download-artifact@v4
+      with:
+        name: openapi-spec
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install OpenAPI Generator
+      run: |
+        wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.10.0/openapi-generator-cli-7.10.0.jar -O openapi-generator-cli.jar
+
+    - name: Generate API client
+      run: |
+        java -jar openapi-generator-cli.jar generate -i SampleApi.json -g typescript-node -o ./sampleapi-nodejs-client --additional-properties="npmName=sampleapi-nodejs-client"
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Build NodeJS client package
+      working-directory: ./sampleapi-nodejs-client
+      run: |
+        npm install
+        npm run build
+        npm pack
+
+    - name: Upload NodeJS package
+      uses: actions/upload-artifact@v4
+      with:
+        name: sampleapi-nodejs-client
+        path: ./sampleapi-nodejs-client/*.tgz
+
+  gen_openapi_angular_client_pkg:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Download OpenAPI spec
+      uses: actions/download-artifact@v4
+      with:
+        name: openapi-spec
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install OpenAPI Generator
+      run: |
+        wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.10.0/openapi-generator-cli-7.10.0.jar -O openapi-generator-cli.jar
+
+    - name: Generate API client
+      run: |
+        java -jar openapi-generator-cli.jar generate -i SampleApi.json -g typescript-angular -o ./sampleapi-angular-client --additional-properties="npmName=sampleapi-angular-client"
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Build Angular client package
+      working-directory: ./sampleapi-angular-client
+      run: |
+        npm install
+        npm run build
+        cd dist
+        npm pack
+
+    - name: Upload Angular package
+      uses: actions/upload-artifact@v4
+      with:
+        name: sampleapi-angular-client
+        path: ./sampleapi-angular-client/dist/*.tgz
